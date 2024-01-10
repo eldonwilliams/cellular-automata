@@ -82,8 +82,12 @@ const render = () => {
 
 const types = ["empty", "rock", "sand", "water"];
 
-const WATER_BLOCKING = ["water", "rock"];
-const WATER_STABILITY_THRESHOLD = 10; // how many water blocks are needed to be stable
+const WATER_BLOCKING = ["rock", "sand"];
+const WATER_MOVABLE = ["empty"];
+
+const SAND_BLOCKING = ["rock", "sand"];
+const SAND_MOVABLE = ["empty", "water"];
+const SAND_STABILITY_THRESHOLD = 3; // how many sand blocks are needed to be stable
 
 const simulationStep = () => {
     // left-to-right, bottom-to-top
@@ -92,23 +96,53 @@ const simulationStep = () => {
             let element = grid[x][y];
             if (element == "empty") continue;
 
-            if (element == "water") {
-                // water falls down and spreads out
+            if (element == "sand") {
                 if (y + 1 >= gridSize[1]) continue;
-                if (grid[x][y + 1] == "empty") {
+                if (SAND_MOVABLE.includes(grid[x][y + 1])) {
                     let temp = grid[x][y + 1];
-                    grid[x][y + 1] = "water";
+                    grid[x][y + 1] = "sand";
                     grid[x][y] = temp;
                     continue;
                 }
 
-                let waterStabilityCheck = grid
-                    .slice(x - Math.floor(WATER_STABILITY_THRESHOLD / 2), x + Math.ceil(WATER_STABILITY_THRESHOLD / 2))
-                    .map(x => x[y + 1])
-                .filter(x => x == "water");
+                let stable = true;
 
-                // If stable, don't spread
-                if (waterStabilityCheck.length >= WATER_STABILITY_THRESHOLD) {
+                for (let i = x - Math.floor(SAND_STABILITY_THRESHOLD / 2); i <= x + Math.floor(SAND_STABILITY_THRESHOLD / 2); i++) {
+                    if (i < 0 || i >= gridSize[0]) continue;
+                    if (SAND_BLOCKING.includes(grid[i][y + 1])) continue;
+                    stable = false;
+                }
+
+                if (stable) continue;
+
+                if (Math.random() > 0.5) {
+                    // sand spreads out, right
+                    if (x + 1 < gridSize[0] && !SAND_BLOCKING.includes(grid[x + 1]?.[y])) {
+                        let temp = grid[x + 1][y];
+                        grid[x + 1][y] = "sand";
+                        grid[x][y] = temp;
+                        continue;
+                    }
+                } else {
+
+                    // sand spreads out, left
+                    if (x - 1 >= 0 && !SAND_BLOCKING.includes(grid[x - 1]?.[y])) {
+
+                        let temp = grid[x - 1][y];
+                        grid[x - 1][y] = "sand";
+                        grid[x][y] = temp;
+                        continue;
+                    }
+                }
+            }
+
+            if (element == "water") {
+                // water falls down and spreads out
+                if (y + 1 >= gridSize[1]) continue;
+                if (WATER_MOVABLE.includes(grid[x][y + 1])) {
+                    let temp = grid[x][y + 1];
+                    grid[x][y + 1] = "water";
+                    grid[x][y] = temp;
                     continue;
                 }
 
