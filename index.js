@@ -173,6 +173,44 @@ const simulationStep = () => {
 }
 
 types.forEach(v => selectionButton(v, selectionButtons));
+
+
+const editRadiusLabel = document.createElement('label');
+editRadiusLabel.innerText = "Edit radius";
+selectionButtons.appendChild(editRadiusLabel);
+
+const editRadius = document.createElement('input');
+editRadius.type = "number";
+editRadius.min = 1;
+editRadius.max = 10;
+editRadius.value = 1;
+selectionButtons.appendChild(editRadius);
+
+// add a square and a circle brush
+const brushTypes = ["square", "circle"];
+const brushType = createState(brushTypes[0]);
+
+const brushTypeButton = (text, target = selectionButtons) => {
+    let rootNode = target.appendChild(document.createElement('div'));
+    rootNode.style = "display: flex; flex-direction: row; align-items: center; gap: 5px;";
+
+    let buttonNode = rootNode.appendChild(document.createElement('div'));
+    buttonNode.innerText = text;
+
+    buttonNode.addEventListener('click', () => {
+        brushType.setState(text);
+    });
+
+    const updateButton = (selected) => {
+        buttonNode.classList = selected == text ? "selected" : "";
+    }
+
+    brushType.subscribe(updateButton);
+    updateButton(brushType.state);
+};
+
+brushTypes.forEach(v => brushTypeButton(v, selectionButtons));
+
 initialRender();
 
 let loopInterval = createState(0);
@@ -204,7 +242,30 @@ window.addEventListener('mousemove', (e) => {
     if (element == null) return;
     if (!element.getAttribute("element")) return;
 
+    let center = [parseInt(element.getAttribute("x-pos")), parseInt(element.getAttribute("y-pos"))];
+    let radius = parseInt(editRadius.value);
 
-    grid[element.getAttribute("x-pos")][element.getAttribute("y-pos")] = selectedButton.state;
+    switch (brushType.state) {
+        case "square":
+            for (let x = center[0] - radius; x <= center[0] + radius; x++) {
+                for (let y = center[1] - radius; y <= center[1] + radius; y++) {
+                    if (x < 0 || x >= gridSize[0]) continue;
+                    if (y < 0 || y >= gridSize[1]) continue;
+                    grid[x][y] = selectedButton.state;
+                }
+            }
+            break;
+        case "circle":
+            for (let x = center[0] - radius; x <= center[0] + radius; x++) {
+                for (let y = center[1] - radius; y <= center[1] + radius; y++) {
+                    if (x < 0 || x >= gridSize[0]) continue;
+                    if (y < 0 || y >= gridSize[1]) continue;
+                    if (Math.sqrt((x - center[0]) ** 2 + (y - center[1]) ** 2) > radius) continue;
+                    grid[x][y] = selectedButton.state;
+                }
+            }
+            break;
+    }
+
     render();
 });
