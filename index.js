@@ -48,6 +48,7 @@ const selectionButton = (text, target = selectionButtons) => {
     updateButton(selectedButton.state);
 };
 
+// let gridSize = [75, 75];
 const gridSize = [75, 75];
 
 const grid = new Array(gridSize[0]);
@@ -211,6 +212,26 @@ const brushTypeButton = (text, target = selectionButtons) => {
 
 brushTypes.forEach(v => brushTypeButton(v, selectionButtons));
 
+const clearButton = selectionButtons.appendChild(document.createElement('button'));
+clearButton.innerText = "clear";
+
+clearButton.addEventListener('click', () => {
+    for (let x = 0; x < gridSize[0]; x++) {
+        for (let y = 0; y < gridSize[1]; y++) {
+            grid[x][y] = "empty";
+        }
+    }
+    render();
+});
+
+let saved = null;
+
+const saveButton = selectionButtons.appendChild(document.createElement('button'));
+saveButton.innerText = "save";
+
+const loadButton = selectionButtons.appendChild(document.createElement('button'));
+loadButton.innerText = "load";
+
 initialRender();
 
 let loopInterval = createState(0);
@@ -226,6 +247,50 @@ const stop = () => {
     clearInterval(loopInterval.state);
     loopInterval.setState(0);
 }
+
+const save = () => {
+    let copiedGrid = new Array(gridSize[0]);
+
+    for (let x = 0; x < gridSize[0]; x++) {
+        copiedGrid[x] = new Array(gridSize[1]);
+        for (let y = 0; y < gridSize[1]; y++) {
+            copiedGrid[x][y] = grid[x][y];
+        }
+    }
+
+    saved = {
+        grid: copiedGrid,
+    }
+
+    saveButton.innerText = "saved";
+    setTimeout(() => saveButton.innerText = "save", 1000);
+}
+
+const load = () => {
+    if (saved == null) return;
+    // gridSize = saved.gridSize;
+    // initialRender();
+    loadButton.innerText = "loaded";
+    let restart = false;
+    if (loopInterval.state != 0) {
+        restart = true;
+        stop();
+    }
+
+    for (let x = 0; x < gridSize[0]; x++) {
+        for (let y = 0; y < gridSize[1]; y++) {
+            grid[x][y] = saved.grid[x][y];
+        }
+    }
+
+    render();
+    if (restart) start();
+
+    setTimeout(() => loadButton.innerText = "load", 1000);
+}
+
+saveButton.addEventListener('click', save);
+loadButton.addEventListener('click', load);
 
 let startStopButton = selectionButtons.appendChild(document.createElement('button'));
 loopInterval.subscribe((state) => {
