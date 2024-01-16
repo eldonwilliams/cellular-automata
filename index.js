@@ -232,6 +232,22 @@ saveButton.innerText = "save";
 const loadButton = selectionButtons.appendChild(document.createElement('button'));
 loadButton.innerText = "load";
 
+const simulationSpeedLabel = document.createElement('label');
+simulationSpeedLabel.innerText = "Simulation speed (10)";
+selectionButtons.appendChild(simulationSpeedLabel);
+
+const simulationSpeed = document.createElement('input');
+simulationSpeed.type = "range";
+simulationSpeed.min = 1;
+simulationSpeed.max = 100;
+simulationSpeed.value = 10;
+simulationSpeed.labe = "simulationSpeed";
+
+selectionButtons.appendChild(simulationSpeed);
+
+const stepSimulationButton = selectionButtons.appendChild(document.createElement('button'));
+stepSimulationButton.innerText = "step";
+
 initialRender();
 
 let loopInterval = createState(0);
@@ -240,13 +256,27 @@ const start = () => {
     loopInterval.setState(setInterval(() => {
         simulationStep();
         render();
-    }, 1 / 10));
+    }, 1 / simulationSpeed.valueAsNumber * 1000));
 }
 
 const stop = () => {
     clearInterval(loopInterval.state);
     loopInterval.setState(0);
 }
+
+stepSimulationButton.addEventListener('click', () => {
+    if (loopInterval.state != 0) return; // don't step if running
+    simulationStep();
+    render();
+});
+
+simulationSpeed.addEventListener('input', () => {
+    simulationSpeedLabel.innerText = `Simulation speed (${simulationSpeed.value})`;
+    if (loopInterval.state != 0) {
+        stop();
+        start();
+    }
+});
 
 const save = () => {
     let copiedGrid = new Array(gridSize[0]);
